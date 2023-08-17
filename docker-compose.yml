@@ -1,0 +1,24 @@
+version: "3"
+services:
+  mysqldb:
+    build:
+      context: ./mysql
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: hatem
+    volumes:
+      - mysql_data:/var/lib/mysql
+    command: ["--init-file", "/docker-entrypoint-initdb.d/init.sql"]
+  listemployee:
+    build:
+      context: .
+    ports:
+      - "8081:8080"
+    depends_on:
+      - mysqldb
+    volumes:
+      - app_data:/app
+volumes:
+  mysql_data:
+  app_data:
