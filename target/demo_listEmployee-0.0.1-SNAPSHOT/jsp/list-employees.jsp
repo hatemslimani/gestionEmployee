@@ -66,7 +66,8 @@
 								<td><a href="#" id="remove"
 									onclick="document.getElementById('action').value = 'remove';document.getElementById('idEmployee').value = '${employee.id}';
                                                     document.getElementById('employeeForm').submit();">
-										<span class="glyphicon glyphicon-trash"/ >
+                                         <i class="bi bi-archive-fill"></i>
+										<!--<span class="glyphicon glyphicon-trash"/ >  -->
 								</a></td>
 							</tr>
 						</c:forEach>
