@@ -2,7 +2,8 @@
 - name: Install Docker and Docker Compose
   hosts: remote_servers
   become: yes
-
+  become_user: root
+  become_method: sudo
   tasks:
     - name: Check if Docker is installed
       command: "which docker"
