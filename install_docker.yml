@@ -4,53 +4,61 @@
   become: yes
 
   tasks:
-    - name: Install required packages
-      apt:
-        name: "{{ packages }}"
-        state: present
-      vars:
-        packages:
-          - apt-transport-https
-          - ca-certificates
-          - curl
-          - gnupg
-          - lsb-release
-          - software-properties-common
+    - name: Check if Docker is installed
+      command: "which docker"
+      register: docker_installed
+      ignore_errors: yes # Ignore errors if Docker is not installed
 
-    - name: Add Docker GPG key
-      apt_key:
-        url: https://download.docker.com/linux/ubuntu/gpg
-        state: present
+    - block:
+        - name: Install required packages
+          apt:
+            name: "{{ packages }}"
+            state: present
+          vars:
+            packages:
+              - apt-transport-https
+              - ca-certificates
+              - curl
+              - gnupg
+              - lsb-release
+              - software-properties-common # Required for adding Docker repository
 
-    - name: Add Docker repository
-      apt_repository:
-        repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable
-        state: present
+        - name: Add Docker GPG key
+          apt_key:
+            url: https://download.docker.com/linux/ubuntu/gpg
+            state: present
 
-    - name: Update APT cache
-      apt:
-        update_cache: yes
+        - name: Add Docker repository
+          apt_repository:
+            repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable
+            state: present
 
-    - name: Install Docker
-      apt:
-        name: docker-ce
-        state: present
+        - name: Update APT cache
+          apt:
+            update_cache: yes
 
-    - name: Install Docker Compose
-      get_url:
-        url: https://github.com/docker/compose/releases/latest/download/docker-compose-Linux-x86_64
-        dest: /usr/local/bin/docker-compose
-        mode: "a+x"
+        - name: Install Docker
+          apt:
+            name: docker-ce
+            state: present
+          when: docker_installed.rc != 0 # Install only if Docker is not installed
 
-    - name: Start and enable Docker service
-      systemd:
-        name: docker
-        enabled: yes
-        state: started
+        - name: Install Docker Compose
+          get_url:
+            url: https://github.com/docker/compose/releases/latest/download/docker-compose-Linux-x86_64
+            dest: /usr/local/bin/docker-compose
+            mode: "a+x"
 
-    - name: Add user to docker group (optional)
-      user:
-        name: "{{ ansible_user }}"
-        groups: docker
-        append: yes
-      when: ansible_user != 'root'
+        - name: Start and enable Docker service
+          systemd:
+            name: docker
+            enabled: yes
+            state: started
+
+        - name: Add user to docker group (optional)
+          user:
+            name: "{{ ansible_user }}"
+            groups: docker
+            append: yes
+          when: ansible_user != 'root' and docker_installed.rc != 0 # Add user to Docker group if Docker was installed
+      when: docker_installed.rc != 0 # Skip the entire block if Docker is already installed
